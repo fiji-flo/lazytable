@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fiji-flo/lazytable.svg?branch=master)](https://travis-ci.org/fiji-flo/lazytable)
+
 # lazy tables with stuipd wrapping
 
 ### Why?

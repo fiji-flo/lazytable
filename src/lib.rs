@@ -39,7 +39,7 @@ impl Table {
     pub fn new(config: TableConfig) -> Table {
         Table {
             title: None,
-            rows: vec!(),
+            rows: vec![],
             config: config,
         }
     }
@@ -69,7 +69,11 @@ impl Table {
         distribute(&dimensions, self.config.width, self.config.padding)
     }
 
-    fn fmt_row(&self, row: &[String], dimenstions: &[usize], f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt_row(&self,
+               row: &[String],
+               dimenstions: &[usize],
+               f: &mut fmt::Formatter)
+               -> fmt::Result {
         let expanded = dimenstions.iter()
             .zip(row.iter())
             .map(|(dim, cell)| split(cell, *dim))
@@ -96,7 +100,9 @@ impl Table {
     fn fmt_seperator(&self, dimensions: &[usize], f: &mut fmt::Formatter) -> fmt::Result {
         let row = join(dimensions.iter()
                            .map(|dim| {
-                                       iter::repeat(self.config.border.1.to_string()).take(dim + self.config.padding * 2).collect::<String>()
+                               iter::repeat(self.config.border.1.to_string())
+                                   .take(dim + self.config.padding * 2)
+                                   .collect::<String>()
                            }),
                        &self.config.border.2);
         write!(f, "{}\n", row)
