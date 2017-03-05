@@ -6,15 +6,15 @@ rust:
   - nightly
 
 install:
-  - cargo install rustfmt
+  - (cargo install rustfmt || true)
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then (cargo install clippy --force) fi
   - export PATH=$HOME/.cargo/bin:$PATH
 
 script:
+  - cargo fmt -- --write-mode=diff
   - cargo build
   - cargo test
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then (cargo clippy) fi
-  - cargo fmt -- --write-mode=diff
 
 cache:
   apt: true
