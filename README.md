@@ -32,5 +32,5 @@ Without a width or with [prettytable](https://github.com/phsym/prettytable-rs):
 
 * clean up code
 * make it configuarable to some extend
-* write proper dock
+* write proper doc
 * publish as crate
