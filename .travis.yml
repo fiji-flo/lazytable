@@ -1,26 +1,15 @@
 sudo: false
 language: rust
+cache: cargo
+
 rust:
   - stable
-  - beta
   - nightly
+  - beta
 
-install:
-  - (cargo install rustfmt || true)
-  - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then (cargo install clippy --force) fi
-  - export PATH=$HOME/.cargo/bin:$PATH
+matrix:
+  include:
+    - rust: nightly
+      env: NIGHTLY=true
 
-script:
-  - cargo fmt -- --write-mode=diff
-  - cargo build
-  - cargo test
-  - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then (cargo clippy) fi
-
-cache:
-  apt: true
-  directories:
-    - $HOME/.cargo
-    - target/debug/build
-
-before_cache:
-    - chmod -R a+r $HOME/.cargo
+script: ./travis.sh

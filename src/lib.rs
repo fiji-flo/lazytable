@@ -1,3 +1,33 @@
+//! ## `lazytable`: lazy tables with stuipd wrapping
+//!
+//! ### Why?
+//!
+//! [prettytable](https://github.com/phsym/prettytable-rs) is awesome.
+//! But wrapping in a teminal is no fun.
+//!
+//! ### What can it do?
+//!
+//! For now **lazytable** only produces a simple table like this:
+//!
+//! Given width of `20`:
+//!
+//! ```text
+//! ######################
+//! # da | foobar  | bar #
+//! #    | foobar  |     #
+//! # da | foobar! | bar #
+//! ######################
+//! ```
+//!
+//! Without a width or with [prettytable](https://github.com/phsym/prettytable-rs):
+//!
+//! ```text
+//! ######################
+//! # da | foobar foobar #
+//! #| bar               #
+//! # da | foobar! | bar #
+//! ######################
+//! ```
 extern crate itertools;
 use std::cmp;
 use std::fmt;
@@ -10,14 +40,20 @@ macro_rules! own {
     ($($s:expr),*) => { ($($s.to_owned()), *) }
 }
 
+/// Type alias for a row.
 type Row = Vec<String>;
 
+/// Width, padding and border strings of a table.
 pub struct TableConfig {
     width: usize,
     padding: usize,
     border: (String, String, String),
 }
 
+/// Default `TableConfig` with:
+/// * `width: 80`
+/// * `padding: 1`
+/// * `border: |-+`
 impl Default for TableConfig {
     fn default() -> TableConfig {
         TableConfig {
@@ -44,18 +80,24 @@ impl Table {
         }
     }
 
+    /// Creates a table with a default config and `width`.
     pub fn with_width(width: usize) -> Table {
         let mut config = TableConfig::default();
         config.width = width;
         Table::new(config)
     }
 
+    /// Set the title row.
     pub fn set_title(&mut self, title: Row) {
         self.title = Some(title);
     }
+
+    /// Add a row.
     pub fn add_row(&mut self, row: Row) {
         self.rows.push(row);
     }
+
+    /// Add multiple rows at once.
     pub fn add_rows(&mut self, rows: &mut Vec<Row>) {
         self.rows.append(rows);
     }
@@ -69,42 +111,47 @@ impl Table {
         distribute(&dimensions, self.config.width, self.config.padding)
     }
 
-    fn fmt_row(&self,
-               row: &[String],
-               dimenstions: &[usize],
-               f: &mut fmt::Formatter)
-               -> fmt::Result {
-        let expanded = dimenstions.iter()
+    fn fmt_row(
+        &self,
+        row: &[String],
+        dimenstions: &[usize],
+        f: &mut fmt::Formatter,
+    ) -> fmt::Result {
+        let expanded = dimenstions
+            .iter()
             .zip(row.iter())
             .map(|(dim, cell)| split(cell, *dim))
             .collect::<Vec<_>>();
         let height = expanded.iter().map(|x| x.len()).max().unwrap_or(0);
         for i in 0..height {
-            let row =
-                join(expanded.iter()
-                         .map(|x| {
-                             x.get(i)
-                                 .and_then(|x| Some(x.to_owned()))
-                                 .unwrap_or_default()
-                         })
-                         .zip(dimenstions.iter())
-                         .map(|(c, w)| {
-                             format!("{pad}{cell: <width$}{pad}", pad = " ", width = w, cell = c)
-                         }),
-                     &self.config.border.0);
-            try!(write!(f, "{}\n", row));
+            let row = join(
+                expanded
+                    .iter()
+                    .map(|x| {
+                        x.get(i)
+                            .and_then(|x| Some(x.to_owned()))
+                            .unwrap_or_default()
+                    })
+                    .zip(dimenstions.iter())
+                    .map(|(c, w)| {
+                        format!("{pad}{cell: <width$}{pad}", pad = " ", width = w, cell = c)
+                    }),
+                &self.config.border.0,
+            );
+            write!(f, "{}\n", row)?;
         }
         Ok(())
     }
 
     fn fmt_seperator(&self, dimensions: &[usize], f: &mut fmt::Formatter) -> fmt::Result {
-        let row = join(dimensions.iter()
-                           .map(|dim| {
-                               iter::repeat(self.config.border.1.to_string())
-                                   .take(dim + self.config.padding * 2)
-                                   .collect::<String>()
-                           }),
-                       &self.config.border.2);
+        let row = join(
+            dimensions.iter().map(|dim| {
+                iter::repeat(self.config.border.1.to_string())
+                    .take(dim + self.config.padding * 2)
+                    .collect::<String>()
+            }),
+            &self.config.border.2,
+        );
         write!(f, "{}\n", row)
     }
 }
@@ -113,11 +160,11 @@ impl fmt::Display for Table {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let dimensions = self.dimensions();
         if let Some(ref title) = self.title {
-            try!(self.fmt_row(&title, &dimensions, f));
-            try!(self.fmt_seperator(&dimensions, f));
+            self.fmt_row(title, &dimensions, f)?;
+            self.fmt_seperator(&dimensions, f)?;
         }
         for row in &self.rows {
-            try!(self.fmt_row(row, &dimensions, f));
+            self.fmt_row(row, &dimensions, f)?;
         }
         Ok(())
     }
@@ -151,8 +198,10 @@ fn flying(col_width: usize, cols: usize, width: usize, padding: usize) -> usize 
 }
 
 fn max_merge(left: &[usize], right: &[usize]) -> Vec<usize> {
-    let mut merged =
-        left.iter().zip(right.iter()).map(|(l, r)| *cmp::max(l, r)).collect::<Vec<_>>();
+    let mut merged = left.iter()
+        .zip(right.iter())
+        .map(|(l, r)| *cmp::max(l, r))
+        .collect::<Vec<_>>();
     let both = merged.len();
     merged.append(&mut left.iter().skip(both).cloned().collect::<Vec<_>>());
     merged.append(&mut right.iter().skip(both).cloned().collect::<Vec<_>>());
@@ -164,7 +213,8 @@ fn distribute(dimensions: &[usize], width: usize, padding: usize) -> Vec<usize> 
     indexed.sort_by(|a, b| a.1.cmp(&b.1));
     let mut width = width;
     let mut cols = dimensions.len();
-    let mut distributed = indexed.iter()
+    let mut distributed = indexed
+        .iter()
         .map(|&(i, x)| {
             let size = flying(x, cols, width, padding);
             cols -= 1;
@@ -177,7 +227,6 @@ fn distribute(dimensions: &[usize], width: usize, padding: usize) -> Vec<usize> 
     distributed.sort_by(|a, b| a.0.cmp(&b.0));
     distributed.iter().map(|&(_, x)| x).collect()
 }
-
 
 #[cfg(test)]
 mod tests {
