@@ -14,4 +14,4 @@ include = ["Cargo.toml", "src/**/*.rs", "tests/**/*.rs", "README.md", "LICENSE"]
 travis-ci = { repository = "fiji-flo/lazytable" }
 
 [dependencies]
-itertools = "*"
+itertools = "0.7"
