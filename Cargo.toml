@@ -10,5 +10,8 @@ keywords = ["table", "print"]
 readme = "README.md"
 include = ["Cargo.toml", "src/**/*.rs", "tests/**/*.rs", "README.md", "LICENSE"]
 
+[badges]
+travis-ci = { repository = "fiji-flo/lazytable" }
+
 [dependencies]
 itertools = "*"
