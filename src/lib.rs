@@ -1,13 +1,39 @@
-//! ## `lazytable`: lazy tables with stuipd wrapping
+//! # `lazytable`: lazy tables with stuipd wrapping
 //!
-//! ### Why?
+//! ## Why?
 //!
 //! [prettytable](https://github.com/phsym/prettytable-rs) is awesome.
 //! But wrapping in a teminal is no fun.
 //!
-//! ### What can it do?
+//! ## Example
 //!
-//! For now **lazytable** only produces a simple table like this:
+//! ```rust
+//!     #[macro_use]
+//! extern crate lazytable;
+//! use lazytable::Table;
+//!
+//! fn main() {
+//!     let mut table = Table::with_width(23);
+//!     table.set_title(row!["who", "what", "when"]);
+//!     table.add_row(row!["da", "foobar foobar", "bar"]);
+//!     table.add_row(row!["da", "foobar!!", "bar"]);
+//!     print!("{}", table);
+//! }
+//! ```
+//!
+//! This will output:
+//! ```text
+//!  who | what     | when
+//! -----+----------+------
+//!  da  | foobar   | bar
+//!      | foobar   |
+//!  da  | foobar!! | bar
+//! ```
+//!
+//!
+//! ## What can it do?
+//!
+//! For now **lazytable** only produces a simple table like this (given a terminal width of 20):
 //!
 //! Given width of `20`:
 //!
@@ -36,43 +62,54 @@ use std::vec;
 
 use self::itertools::join;
 
-macro_rules! own {
-    ($($s:expr),*) => { ($($s.to_owned()), *) }
-}
-
 /// Type alias for a row.
 type Row = Vec<String>;
 
+/// This macro simplifies `Row` creation
+///
+/// # Example
+/// ```
+/// # #[macro_use] extern crate lazytable;
+///
+/// # fn main() {
+/// let row = row!["foo", "bar"];
+/// # }
+/// ```
+#[macro_export]
+macro_rules! row {
+     ($($content:expr), *) => ((vec![$($content.to_owned()), *]));
+}
+
 /// Width, padding and border strings of a table.
-pub struct TableConfig {
+pub struct TableConfig<'a> {
     width: usize,
     padding: usize,
-    border: (String, String, String),
+    border: (&'a str, &'a str, &'a str),
 }
 
 /// Default `TableConfig` with:
 /// * `width: 80`
 /// * `padding: 1`
 /// * `border: |-+`
-impl Default for TableConfig {
-    fn default() -> TableConfig {
+impl<'a> Default for TableConfig<'a> {
+    fn default() -> TableConfig<'a> {
         TableConfig {
             width: 80,
             padding: 1,
-            border: own!("|", "-", "+"),
+            border: ("|", "-", "+"),
         }
     }
 }
 
 #[derive(Default)]
-pub struct Table {
+pub struct Table<'a> {
     title: Option<Row>,
     rows: Vec<Row>,
-    config: TableConfig,
+    config: TableConfig<'a>,
 }
 
-impl Table {
-    pub fn new(config: TableConfig) -> Table {
+impl<'a> Table<'a> {
+    pub fn new(config: TableConfig<'a>) -> Table {
         Table {
             title: None,
             rows: vec![],
@@ -81,7 +118,7 @@ impl Table {
     }
 
     /// Creates a table with a default config and `width`.
-    pub fn with_width(width: usize) -> Table {
+    pub fn with_width(width: usize) -> Table<'a> {
         let mut config = TableConfig::default();
         config.width = width;
         Table::new(config)
@@ -136,7 +173,7 @@ impl Table {
                     .map(|(c, w)| {
                         format!("{pad}{cell: <width$}{pad}", pad = " ", width = w, cell = c)
                     }),
-                &self.config.border.0,
+                self.config.border.0,
             );
             write!(f, "{}\n", row)?;
         }
@@ -150,13 +187,13 @@ impl Table {
                     .take(dim + self.config.padding * 2)
                     .collect::<String>()
             }),
-            &self.config.border.2,
+            self.config.border.2,
         );
         write!(f, "{}\n", row)
     }
 }
 
-impl fmt::Display for Table {
+impl<'a> fmt::Display for Table<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let dimensions = self.dimensions();
         if let Some(ref title) = self.title {

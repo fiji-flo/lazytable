@@ -22,13 +22,38 @@ and look at the docs:
 * [lazytable at crates.io](https://crates.io/crate/lazytable)
 * [lazytable documentation](https://docs.rs/crate/lazytable)
 
+## Example
+
+```rust
+#[macro_use]
+extern crate lazytable;
+use lazytable::Table;
+
+fn main() {
+    let mut table = Table::with_width(23);
+    table.set_title(row!["who", "what", "when"]);
+    table.add_row(row!["da", "foobar foobar", "bar"]);
+    table.add_row(row!["da", "foobar!!", "bar"]);
+    print!("{}", table);
+}
+```
+
+This will output:
+```
+ who | what     | when
+-----|----------|------
+ da  | foobar   | bar
+     | foobar   |
+ da  | foobar!! | bar
+```
+
 ## Why?
 
 [prettytable](https://github.com/phsym/prettytable-rs) is awesome. But wrapping in a teminal is no fun.
 
 ## What can it do?
 
-For now **lazytable** only produces a simple table like this:
+For now **lazytable** only produces a simple table like this (given a terminal width of 20):
 
 Given width of `20`:
 ```
