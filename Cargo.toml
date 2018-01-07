@@ -1,6 +1,6 @@
 [package]
 name = "lazytable"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Florian Merz <flomerz@gmail.com>"]
 description = "lazy tables with stupid wrapping"
 license = "MIT"

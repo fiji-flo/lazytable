@@ -71,7 +71,6 @@ type Row = Vec<String>;
 /// # Example
 /// ```
 /// # #[macro_use] extern crate lazytable;
-///
 /// # fn main() {
 /// let row = row!["foo", "bar"];
 /// # }
